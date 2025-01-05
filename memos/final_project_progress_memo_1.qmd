@@ -1,0 +1,64 @@
+---
+title: "Progress Memo 1"
+subtitle: |
+  | Final Project 
+  | Data Science 1 with R (STAT 301-1)
+author: "Rohan Krishnamurthi"
+date: today
+
+format:
+  html:
+    toc: true
+    embed-resources: true
+    
+execute:
+  echo: false
+  warning: false
+
+from: markdown+emoji 
+---
+
+::: {.callout-tip icon=false}
+
+## Github Repo Link
+
+[https://github.com/stat301-2-2024-winter/final-project-2-rohankrishnamurthi2025](https://github.com/stat301-2-2024-winter/final-project-2-rohankrishnamurthi2025)
+
+:::
+
+## Prediction Problem
+
+The objective of this research project is to develop a model that will predict who will win a match in the Women's Tennis Association (WTA). The target variable is the result of each match (win or lose), and it is a categorical variable. Thus, this is a classification problem. 
+
+I am an avid fan of the WTA and the sport of tennis as a whole. I am curious to know if data can be used to predict the winner of matches. This prediction model can be used by others to predict the winners of matches or at least identify the odds that a player wins a match.
+
+## Data source
+
+I have downloaded five xlsx datasets: the results of every singles match on the WTA for the years 2017, 2018, 2019, 2020, 2021, 2022, and 2023. Each row in a dataset corresponds to a match. The data includes the tournament and round, the winner and loser of each match, and the score. All of the datasets were found on the same url.
+
+Link to WTA data, 2017-2023:
+[https://data.world/tylerudite/wta-match-data](https://data.world/tylerudite/wta-match-data)
+
+I have also downloaded seven csv datasets: the results of every singles match on the WTA for every year 2010-2016. The data includes the tournament and round, the winner and loser of each match, and the score, as well as details such as break points faced, double faults, aces, etc.
+
+Link to WTA data, 2010-2016:
+[https://www.kaggle.com/datasets/gmadevs/wta-matches](https://www.kaggle.com/datasets/gmadevs/wta-matches)
+
+
+## Data quality & complexity check
+
+The data between 2010 and 2016 are read in as follows. There are 49 variables in all of these datasets. The number of rows in each dataset, 2010-2016, are 2781, 2804, 2910, 2776, 2785, 2651, and 91. Yes, there are rows with missingness. 32 variables are numeric, and the remaining 17 are categorical.
+
+
+The data between 2017 and 2023 are read in as follows. The dataframes have 36 variables in total. 22 variables are numerical, and the remaining 14 are categorical. The number of observations in the dataframes are 2500, 2469, 2472, 1055, 2447, 2369, and 2491, respectively. Yes, there is missingness in the data.
+
+
+## Target variable analysis
+The target variable of this analysis the winner of each match. This analysis is unique in that the target variable is a binary, categorical variable. Thus, predictions can be one of two outcomes, one being correct, and the other being incorrect. It is difficult to evaluate the distribution of a binary, categorical variable. 
+
+Another way of addressing this question is predicting the percentage of games a player will win in a match. This approach could be used to have the target variable be numerical instead of categorical. It is unlikely that the percentages will demonstrate skew, as they will be a value between 0 and 100. 
+
+
+## Misc
+
+This predictive modeling research can be applied to other datasets, including the male professional tennis tour (ATP). It can also be applied to doubles matches on both the WTA and the ATP. This would add further complexity to the analysis, as characteristics regarding both players on a doubles team would need to be considered in predicting the outcome of their match. 

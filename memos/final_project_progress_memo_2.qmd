@@ -1,0 +1,98 @@
+---
+title: "Progress Memo 2"
+subtitle: |
+  | Final Project 
+  | Data Science 1 with R (STAT 301-1)
+author: "Rohan Krishnamurthi"
+date: today
+
+format:
+  html:
+    toc: true
+    embed-resources: true
+    
+execute:
+  echo: false
+  warning: false
+
+from: markdown+emoji 
+---
+
+::: {.callout-tip icon=false}
+
+## Github Repo Link
+
+[https://github.com/stat301-2-2024-winter/final-project-2-rohankrishnamurthi2025](https://github.com/stat301-2-2024-winter/final-project-2-rohankrishnamurthi2025)
+
+:::
+
+
+## Introduction
+
+The objective of this research project is to develop a model that will predict the number of games played in matches in the Women's Tennis Association (WTA) circuit. The target variable is the number of games played in a match, and it is a quantitative variable. Thus, this research project examines a regression problem. 
+
+I am an avid fan of the WTA and the sport of tennis as a whole. I am curious to know if data can be used to predict the number of games played in a matches. This prediction model can be used by others to predict the length of matches played, in  games and consequently time duration. This can help tournament organizers in planning when to schedule matches and how many matches they should schedule in one day, in order to meet time constraints.
+
+## Data Overview
+
+I have downloaded seven xlsx datasets: the results of every singles match on the WTA for the years 2017, 2018, 2019, 2020, 2021, 2022, and 2023. Each row in a dataset corresponds to a match. The data includes the tournament and round, the winner and loser of each match, and the score. 
+
+Link to WTA data, 2017-2023:
+[https://data.world/tylerudite/wta-match-data](https://data.world/tylerudite/wta-match-data)
+
+I have also downloaded seven csv datasets: the results of every singles match on the WTA for every year 2010-2016. The data includes the tournament and round, the winner and loser of each match, and the score.
+
+Link to WTA data, 2010-2016:
+[https://www.kaggle.com/datasets/gmadevs/wta-matches](https://www.kaggle.com/datasets/gmadevs/wta-matches)
+
+## Data Cleaning
+
+The data from 2017-2023 were read in and checked for missingness. In general, the datasets were largely complete and had little to no missing values (aside from cells deliberately missing values). The data was then prepared by converting the ranking and points of players to integers. Then, new columns were created to document the number of games won by the loser, won by the winner, and the total games played. Lastly, the variables corresponding to the surface, court type, tournament round, tournament level, and match completion status were converted into factors.
+
+The data from 2010-2016 were disregarded, as they lacked useful numerical information and there was already enough data from 2017-2023.
+
+
+## Assessment Metric and Analysis Plan
+
+### Overview of variables
+It was decided to develop models on the 2023 data alone. There are 2,491 observations in this dataset, corresponding to the total number of matches played in 2023, so it was decided this data alone was sufficient for the model development. 
+
+As the objective of this project is to determine the number of games played in a match, `Games` is the target/response variable in this analysis. Potential predictor variables for this model include the `WRank` and `LRank`, the ranking of the winning and losing player, `WPts` and `LPts`, the current points of the winning and losing player, `Surface`, `Court`, `Tournament`, and `Tier`, or the level of tournament. The predictor variables incorporated depend on the recipe developed and utilized in each model.
+
+
+### EDA of Outcome Variable
+Upon plotting the distribution of `Games`, it was found that the distribution is roughly normal. The median number of games played was 20, and the mean games was 21.77. Nonetheless, the data is more concentrated at values larger than its peak, indicating that it is relatively left skewed or positively skewed. Since the distribution was generally normal, no transformations on the data were conducted. For reference, the number of games in a completed match can vary from 12 to 39. If a match is incomplete, then fewer than 12 games could be played. 
+
+
+### Splitting of Data
+The 2023 match data was split using stratified random sampling into a training set, containing 80% of the matches, and a testing set, containing 20% of the matches. The `Games` variable was used as the strata for splitting data, as this is the predictor variable in this analysis. 
+
+V-fold cross validation was then used to fold the data, specifically using 10 folds and 3 repeats. 
+
+### Recipe Development
+Two recipes were  developed: one for most regression models (the default recipe) and one for the random forest model. In both of these models, the `Tier`, `Court`, `Surface`, `Round`, `WRank`, `LRank`, `WPts`, and `LPts` variables were incorporated as predictor variables. One hot encoding was not used for the default recipe, while it was used for the random forest recipe. In both of these recipes, all predictor variables were centered, and the numeric predictor variables were normalized.
+
+
+### Selection of Models
+
+In this project, it is anticipated to incorporate a null model, a linear regression model, a lasso regression model, a ridge regression model, a k-nearest neighbor model, and a random forest model.
+
+## Defining and fitting of Models
+
+Two models have been defined and fitted so far: the null model and the ordinary linear regression model.
+
+## Model Analysis
+
+The following table contains the assessment metric values of the null model and ordinary linear regression model. Because the RMSE value for the linear regression model is slightly lower than that of the null model, the data suggests that the linear regression model predicts `Games` values with greater accuracy than the null model. However, due to sizable standard deviation values, no definite conclusions can be drawn. 
+
+
+The following tables show the actual and predicted number of games played for the first 10 matches of the 2023 WTA Season. The first table shows values predicted by the null model, and the second table shows values predicted by the ordinary linear regression model. Both models reveal significant gaps in predicted vs. actual values.
+
+
+## Summary and Next Steps
+In summary, I have identified relevant predictor variables for determining the `Games` value in a match. I have split the 2023 WTA match data into training and testing sets. Using the training set, I have developed a default recipe and random forest recipe, and then have defined and fitted the null and linear regression models. Lastly, I compared the two models using the RMSE.
+
+As I continue with this project, I should continue defining and fitting the lasso regression, ridge regression, random forest, and k-nearest neighbor models. The random forest model will require me to use the recipe unique to random forests. After finishing model development, I should continue to analyze the models by comparing the RMSE values. I should also incorporate the R^2 and MAE to help determine the best model. Lastly, I can also use the other WTA match datasets, from 2017-2022, to test the models I have developed.
+
+
+
