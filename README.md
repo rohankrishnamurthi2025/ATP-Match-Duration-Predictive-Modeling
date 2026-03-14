@@ -25,3 +25,188 @@ In this project, I developed six different models to predict how long matches on
 - `final_report_Krishnamurthi_Rohan.qmd`: the qmd of the final report
 
 
+
+# Data Overview
+
+One dataset was downloaded that records the information for all matches on the ATP from 1968 to 2022. Each observation in the dataset corresponds to a match played. The dataset records the tournament, date, and round of each match, the loser and winner and their respective ranking, the breakdown of points played in the match, and other information.
+
+The data was checked for missingness, and sliced to only include data from 2017-2022. Multiple steps were then taken to prepare the dataset for analysis, such as converting character variables to factors, removing arbitrary variables with no significant impact on match outcome, and removal of rows missing the number of minutes (the response variable). Imputing missing data in the dataset was not conducted. This is because variables used in this analysis had little to no missing values, so it was not deemed necessary. Variables with nearly complete cases were intentionally selected for this analysis.
+
+## Dataset Link
+
+Link to ATP data, 1968-2022:
+[https://www.kaggle.com/datasets/sijovm/atpdata?resource=download](https://www.kaggle.com/datasets/sijovm/atpdata?resource=download)
+
+
+
+
+
+```{r}
+#| echo: false
+
+library(tidyverse)
+library(tidymodels)
+library(janitor)
+library(conflicted)
+library(parsnip)
+library(here)
+library(skimr)
+library(patchwork)
+library(kknn)
+tidymodels_prefer()
+
+```
+
+
+```{r}
+#| echo: false
+
+atp_train <- read_rds("cleaned data/atp_train.rds")
+atp_test <- read_rds("cleaned data/atp_test.rds")
+
+```
+
+
+# Response Variable
+
+As the objective of this project is to determine the number of minutes of a match (a regression problem), `minutes` is the response variable in this analysis. Predictor variables for this model include the classification variables of `surface` and `tourney_level`. Numeric variables include `winner_age` and `loser_age`, `winner_rank_points` and `loser_rank_points`, `winner_ht` and `loser_ht`, as well as all match statistics. 
+
+Upon plotting the distribution of `minutes`, as shown in the figure below, it was found that the distribution is generally normal. Thus, no transformations on the `minutes` data were conducted. 
+
+![](figures/minutes_histogram.png){#minutes_histogram}
+
+The correlation matrix below shows how strongly correlated the numerical variables are with one another. It is evident that the variables vary greatly in their correlation with one another. One particularly strong correlation occurs between `minutes` and `service_points`, as well as between `minutes` and `service_points`. 
+
+![](figures/cor_matrix.png){#cor_matrix}
+
+
+
+# Methods
+
+The match data was split using stratified random sampling into a training set, containing 80% of the matches, and a testing set, containing 20% of the matches. The `minutes` variable was used as the strata for splitting data, as this is the predictor variable in this regression problem. V-fold cross validation was then used to fold the data into non-overlapping folds, specifically using 5 folds and 3 repeats. Resampling was utilized due to the relatively low number of observations in the dataset. With this number of folds and repeats, the data will be fit 15 times for each model.
+
+## Recipes
+
+
+Three recipes were developed for this analysis: a default recipe, a recipe incorporating interactions between predictors, and a random forest recipe. These variables utiilized by the recipes included the tournament level, match surface, numerical statistics regarding the winner and loser, and numerical statistics regarding the breakdown of points played. Variables that were believed to have little to no effect were excluded, such as the tournament itself, the player names, and the country of origin of the players. In all of these recipes, all predictor variables were centered, and the numeric predictor variables were normalized.
+
+The interaction recipe is similar to the default recipe, the only difference being that the interactive recipe includes interactions between variables that are correlated with each other (as shown in the EDA). This includes and `service_games` and `service_points`. The relationships of this pair of variables are shown in the scatterplot below. 
+
+![](figures/points_games.png){#fig_points_games}
+
+
+Both the default and the interaction recipe were used to develop the null, linear regression, k-nearest neighbor, and elastic net models. One hot encoding was not used for the default and interaction recipes, while it was used for the random forest recipe. The random forest recipe was used to develop the boosted tree model and the random forest model.
+
+# Model Building and Selection
+
+Six different models were fitted to the datasets. A null model and an ordinary linear regression model served as baseline models for our predictions. A boosted tree model, random forest model, k-nearest neighbors model, and an elastic net model were also incorporated. The boosted tree model uses mtry, minimum nodes, and learning rate as tuning parameters, while the random forest model uses mtry, minimum nodes, and trees. The k-nearest neighbors model uses neighbors as the tuning parameters. Finally, the elastic net model incorporates penalty and mixture as tuning parameters.
+
+## Selection of Best Model
+
+The following tables show the lowest RMSE value for each model and respective recipe, indicating the best performance of each one.
+
+In the first table, @tbl-recipe-default,  the best performance of the models developed using the default recipe (with no interact terms) is shown.
+
+```{r}
+#| echo: false
+#| label: tbl-recipe-default
+#| tbl-cap: Best Performing Models for Default Recipe
+
+
+load(here("tables/metrics_table.rda"))
+
+metrics_table |> filter(recipe == "default") |> kableExtra::kable()
+
+
+```
+
+In the second table, @tbl-recipe-interact,  the best performance of the models developed using the interact recipe is shown.
+
+```{r}
+#| echo: false
+#| label: tbl-recipe-interact
+#| tbl-cap: Best Performing Models for Interact Recipe
+
+
+metrics_table |> filter(recipe == "interact") |> kableExtra::kable()
+
+```
+
+In the last table, @tbl-recipe-rf,  the best performance of the models developed using the random forest recipe is shown.
+
+```{r}
+#| echo: false
+#| label: tbl-recipe-rf
+#| tbl-cap: Best Performing Models for Random Forest Recipe
+
+
+metrics_table |> filter(recipe == "random forest") |> kableExtra::kable()
+
+```
+
+Overall, from the RMSE values among all three tables, the elastic net model developed with the interact recipe performed best, with the penalty set to 0, 0.00001, or 0.00316, and the mixture set to 0.2875. These models' predictions of match duration had a root-mean-squared-error of 5.51 minutes. This is a fairly successful model, considering that the heavy majority of matches last one to three hours. Increases in traning set size and enhanced complexity of the recipe could be used to differentiate the performances of these three sets of parameters.
+
+Additionally, the interact recipe performed slightly better than the default recipe for the elastic net and k-nearest neighbor models, while it performed the same for the null and linear regression models. This indicates that adding complexity through step interactions enhances model performance for the elastic net and k-nearest neighbor models. 
+
+# Final Model Analysis
+
+The final model was made by developing the elastic net model with the interact recipe and setting the penalty parameter to 0 and the mixture parameter to 0.2875. A glimpse of these predictions and their difference from the actual durations can be seen in @tbl-elastic-final-predictions. 
+
+```{r}
+#| echo: false
+#| label: tbl-elastic-final-predictions
+#| tbl-cap: Predictions of Final Elastic Net Model
+
+load(here("tables/final_predictions.rda"))
+
+head(final_predictions, n = 10) |> kableExtra::kable()
+
+```
+
+The following table, @tbl-elastic-final-metrics, shows the RMSE, RSQ, MAPE, and MAE values for the final model. The MAPE value of 7.35 confirms that the average deviation people forecasted and actual values for the duration of matches is small, whiole the RSQ value of 0.933 indicates that the data fits the final model particularly well.
+
+```{r}
+#| echo: false
+#| label: tbl-elastic-final-metrics
+#| tbl-cap: Predictive Metrics of Final Elastic Net Model
+
+load(here("tables/pred_metrics.rda"))
+
+pred_metrics |> kableExtra::kable()
+
+```
+
+Lastly, the following scatterplot shows the direct relationship of the actual and predicted durations of matches (in minutes). The plot shows that actual and predicted values increase with an approximately 1:1 slope, indicating that they are proportionate to each other.
+
+
+![](figures/minutes_plot.png){#minutes_plot}
+
+Overall, the elastic net model with the interact recipe and this set of parameters performed successfully in predicting duration of matches. The model performed particularly well at predicting the duration of shorter matches. The strong correlation of the model's predictions and actual values indicate that developing more intricate models, such as the elastic net model, as worthwhile. 
+
+# Conclusions
+
+The elastic net model developed using the interact recipe (with mtry set to 0.2875 and penalty set to 0, 0.00001, and 0.0031623), was found to be the best at predicting the duration of tennis matches. Overall, minimizing the penalty of the elastic net model enhanced the model's performance greatly. 
+
+The findings of this project can be refined by incorporating more tennis match data, such as from years before 2017. Additionally, other predictors can be incorporated regarding the information of players (the playing style, history of previous matches) and the match itself (i.e. the weather conditions, the time of day, etc.). Increasing the size of the training dataset, and refining the complexity of the interact recipe, can optimize the final elastic net model's performance.
+
+To extend analysis of this project, the models and recipes developed can be applied to other datasets. For example, the same models can be used on the data of the Women's Tennis Association (WTA), to predict match duration for women's tennis matches, as well as to doubles matches on both the ATP and the WTA. Overall, the applications of this research will help tournament organizers in predicting the length of matches of all divisions, as well as help playeres in estimating how much energy they will expend in their matches.
+
+
+# References
+
+"Elevating Tennis Performance: ATP & TDI Unveil Tennis IQ Analytics Platform." Association of Tennis Professionals 2023.
+<https://www.atptour.com/en/news/atp-tdi-unveil-tennis-iq-analytics-platform>
+
+"Data takes Center Court at the Women’s Tennis Association with SAP BTP." Women's Tennis Association. 2023.
+<https://www.wtatennis.com/news/3646982/data-takes-center-court-at-the-women-s-tennis-association-with-sap-btp>
+
+"Analytics in Tennis Has Been an Evolution, Not a Revolution." The New York Times. 2022.
+<https://www.nytimes.com/2022/08/27/sports/tennis/us-open-analytics-data.html>
+
+
+
+
+
+
+
+
